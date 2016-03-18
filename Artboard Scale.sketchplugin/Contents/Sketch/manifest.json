@@ -1,0 +1,31 @@
+{
+  "author" : "rongyan.zry",
+  "commands" : [
+    {
+      "script" : "script.cocoascript",
+      "handler" : "setFixedMasks",
+      "shortcut" : "option m",
+      "name" : "Artboard Mask",
+      "identifier" : "com.rongyanzry.layermask"
+    },
+    {
+      "script" : "script.cocoascript",
+      "handler" : "onRun",
+      "shortcut" : "option s",
+      "name" : "Artboard Scale",
+      "identifier" : "com.rongyanzry.artboardscale"
+    }
+  ],
+  "menu" : {
+    "items" : [
+     "com.rongyanzry.layermask",
+      "com.rongyanzry.artboardscale"
+    ],
+    "title" : "Artboard Scale"
+  },
+  "identifier" : "com.rongyanzry.sketch.9a776995-f790-4048-870b-881639f52bcc",
+  "version" : "1.0",
+  "description" : "A plugin that helps you to scale artboards and layers",
+  "authorEmail" : "scutryzheng@gmail.com",
+  "name" : "Artboard Scale"
+}

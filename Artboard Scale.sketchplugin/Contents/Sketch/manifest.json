@@ -2,14 +2,14 @@
   "author" : "rongyan.zry",
   "commands" : [
     {
-      "script" : "script.cocoascript",
+      "script" : "Script.js",
       "handler" : "setFixedMasks",
       "shortcut" : "option m",
       "name" : "Artboard Mask",
       "identifier" : "com.rongyanzry.layermask"
     },
     {
-      "script" : "script.cocoascript",
+      "script" : "Script.js",
       "handler" : "onRun",
       "shortcut" : "option s",
       "name" : "Artboard Scale",

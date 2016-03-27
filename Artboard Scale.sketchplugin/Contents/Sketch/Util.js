@@ -25,40 +25,32 @@ var getParentHeight = function (layer) {
 };
 
 var getWidth = function (layer) {
-    log("getWidth" + layer);
+
     return layer.frame().width();
 };
 
 var getHeight = function (layer) {
-    log("getHeight" + layer);
 
     return layer.frame().height();
 };
 
 var getLeft = function (layer) {
 
-    log("getLeft" + layer);
-
     return layer.frame().x();
 };
 
 var getTop = function (layer) {
-    log("getTop" + layer);
 
     return layer.frame().y();
 };
 
 var getOldRight = function (layer, scale) {
 
-    log("getOldRight" + layer);
-
     return getParentOldWidth(layer, scale) - getLeft(layer) - getWidth(layer);
 };
 
 
 var getOldBottom = function (layer, scale) {
-
-    log("getOldBottom" + layer);
 
     return getParentOldHeight(layer, scale) - getTop(layer) - getHeight(layer);
 };
@@ -67,28 +59,20 @@ var getOldBottom = function (layer, scale) {
 // setter
 var setWidth = function (layer, width) {
 
-    log("setWidth" + layer);
-
     layer.frame().setWidth(Math.round(width));
 };
 
 var setHeight = function (layer, height) {
-
-    log("setHeight" + layer);
 
     layer.frame().setHeight(Math.round(height));
 };
 
 var setLeft = function (layer, x) {
 
-    log("setLeft" + layer);
-
     layer.frame().setX(Math.round(x));
 };
 
 var setTop = function (layer, y) {
-
-    log("setTop" + layer);
 
     layer.frame().setY(Math.round(y));
 };
@@ -127,6 +111,7 @@ var scaleFrame = function (layer, hScale, vScale) {
         log("layer" + hScale);
         log("bitmap" + w);
     }
+    
     setLeft(layer, x);
     setTop(layer, y);
     setWidth(layer, w);

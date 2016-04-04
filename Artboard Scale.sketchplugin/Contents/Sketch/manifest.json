@@ -4,14 +4,14 @@
     {
       "script" : "Script.js",
       "handler" : "setFixedMasks",
-      "shortcut" : "option m",
+      "shortcut" : "cmd shift m",
       "name" : "Artboard Mask",
       "identifier" : "com.rongyanzry.layermask"
     },
     {
       "script" : "Script.js",
       "handler" : "onRun",
-      "shortcut" : "option s",
+      "shortcut" : "cmd p",
       "name" : "Artboard Scale",
       "identifier" : "com.rongyanzry.artboardscale"
     }

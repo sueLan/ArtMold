@@ -17,9 +17,16 @@ var FixedSizeMask = {
     kHeight: 1 << 5
 };
 
-//--------------------------------------//
-//               artboard               //
-//--------------------------------------//
+var app = NSApplication.sharedApplication(),
+    doc,             // MSDocument object,
+    selection,       // an NSArray of the layer(s) that are selected in the current document
+    plugin,
+    command,
+    page,            // the current page in the current document
+    artboards,       // artboards and slices on the current page
+    selectedArtboard;
+
+
 var onRun = function (context) {
 
     initContext(context);
@@ -32,60 +39,50 @@ var onRun = function (context) {
     var dWidth = getWidth(selectedArtboard),
         dHeight = getHeight(selectedArtboard),
         dScale = 2;
-    if (dWidth == 0 || dHeight == 0) return;
+    if (dWidth == 0 || dHeight == 0) {
+
+        doc.showMessage("请选择有效画板");
+        return;
+    }
+
     // 获取目标画板的参数 
     var tSizes = runExporter(dWidth, dHeight, dScale);
     tSizes.reverse();
-    var x = getLeft(selectedArtboard);
+    if (tSizes.length <= 0) {
+
+        doc.showMessage("请选择缩放的目标尺寸");
+        return;
+    }
+
+    var maxXLeftW = getMaxLeftWidth();
+    var x = maxXLeftW[0] + maxXLeftW[1];
     var y = getTop(selectedArtboard);
 
     for (var i in tSizes) {
         x += 200;
-        x += (i > 0 ? tSizes[i-1][1] : dWidth);
+        x += (i > 0 ? tSizes[i-1][1] : 0);
 
-        if (tSizes[i][1] == dWidth && tSizes[i][2] == dHeight && tSizes[i][3] == dScale) return;
-        if (tSizes[i][1] == 0 || tSizes[i][2] == 0) return;
+        if (tSizes[i][1] == dWidth && tSizes[i][2] == dHeight && tSizes[i][3] == dScale) {
+
+            doc.showMessage("目标尺寸与当前尺寸相同");
+            continue;
+        }
+
+        if (tSizes[i][1] == 0 || tSizes[i][2] == 0) {
+
+            doc.showMessage("目标尺寸的高度或者宽度不能为0");
+            continue;
+        }
 
         var hScale = i > 0 ? (tSizes[i][1] / tSizes[i - 1][1]) : (tSizes[i][1] / dWidth);
         var vScale = i > 0 ? (tSizes[i][2] / tSizes[i - 1][2]) : (tSizes[i][2] / dHeight);
+        log("111hScale = " + hScale);
+        log("111vScale = " + vScale);
 
-        createTargetArtboards([x, y], hScale, vScale);
+        createTargetArtboards([x, y], hScale, vScale, i, tSizes[i][0]);
     }
 };
 
-
-/**
- * 生成新画版
- * @param origin   画板的origin坐标
- * @param hScale  hScale 水平缩放比例: 目标画板尺寸 / 原始画板尺寸
- * @param vScale  vScale 垂直缩放比例: 目标画板尺寸 / 原始画板尺寸
- */
-var createTargetArtboards = function (origin, hScale, vScale) {
-
-    // MSCanvasActions
-    var action = doc.actionsController().actionWithName("MSCanvasActions");
-    // 默认复制artboards中最后一个画板
-    action.duplicate(nil);
-
-    // 复制后,当前页面有新增的画板
-    artboards = page.artboards();
-    artboard = artboards.count() > 0 ? artboards[artboards.count() - 1] : undefined;
-
-    // place and scale the new artboard
-    setLeft(artboard, origin[0]);
-    setTop(artboard, origin[1]);
-    var w = getWidth(artboard) * hScale;
-    var h = getHeight(artboard) * vScale;
-    setWidth(artboard, w);
-    setHeight(artboard, h);
-
-    var layerEnumerator = artboard.layers().array().objectEnumerator();
-    loopThrough(layerEnumerator, hScale, vScale, function (layer) {
-
-        var fixedMasks = getAutoresizingConstrains(layer);
-        resizingLayer(layer, fixedMasks, hScale, vScale);
-    });
-};
 
 var setFixedMasks = function (context) {
 
@@ -166,10 +163,10 @@ var resizingLayerWithMask = function (layer, sizeMask, hScale, vScale) {
     var fixedW = 0;
     if ((sizeMask & FixedSizeMask.kLeftMargin)) fixedW += getLeft(layer);
     if ((sizeMask & FixedSizeMask.kWidth)) fixedW += getWidth(layer);
-    if ((sizeMask & FixedSizeMask.kRightMargin)) fixedW += getOldRight(layer, hScale);
+    if ((sizeMask & FixedSizeMask.kRightMargin)) fixedW += getRightInRecursion(layer, hScale);
 
     // 2 水平缩放的比例
-    var flexibleRatio = (getParentOldWidth(layer, hScale) - fixedW) / (getParentWidth(layer) - fixedW);
+    var flexibleRatio = (getParentWidthInrecursion(layer, hScale) - fixedW) / (getParentWidth(layer) - fixedW);
     // 3 求水平自动改变尺寸的宽度
     if ((sizeMask & FixedSizeMask.kLeftMargin) == 0) {
 
@@ -186,9 +183,9 @@ var resizingLayerWithMask = function (layer, sizeMask, hScale, vScale) {
     fixedW = 0;
     if ((sizeMask & FixedSizeMask.kTopMargin)) fixedW += getTop(layer);
     if (sizeMask & FixedSizeMask.kHeight) fixedW += getHeight(layer);
-    if (sizeMask & FixedSizeMask.kBottomMargin) fixedW += getOldBottom(layer, vScale);
+    if (sizeMask & FixedSizeMask.kBottomMargin) fixedW += getBottomInrecursion(layer, vScale);
 
-    flexibleRatio = (getParentOldHeight(layer, vScale) - fixedW) / (getParentHeight(layer) - fixedW);
+    flexibleRatio = (getParentHeightInrecursion(layer, vScale) - fixedW) / (getParentHeight(layer) - fixedW);
 
     if ((sizeMask & FixedSizeMask.kTopMargin) == 0) {
 
@@ -202,42 +199,54 @@ var resizingLayerWithMask = function (layer, sizeMask, hScale, vScale) {
 };
 
 
-
 //--------------------------------------//
 //                Layers                //
 //--------------------------------------//
 function loopThrough(layerLoop, hScale, vScale, callback) {
 
+    var layer;
     while (layer = layerLoop.nextObject()) {
 
-        //if (isLayerClass(layer, "MSShapeGroup") || isLayerClass(layer, "MSLayerGroup")) {
-        if (isLayerClass(layer, "MSLayerGroup")) {
-            // MSLayerGroup组的区域根据子视图适配,只调origin位置,不调高宽;
-            scaleOrigin(layer, hScale, vScale);
-            var layers = layer.layers().array(),
-                layersInsideLoop = layers.objectEnumerator();
-            loopThrough(layersInsideLoop, hScale, vScale, callback);
-            // loopThrough后面引用layer,为null
+        if (isLayerClass(layer, "MSLayerGroup") || isLayerClass(layer, "MSShapeGroup")) {
+
+            // 组调高宽,sketch自动调节组内元素的高宽,但是高宽,不能改变
+            scaleFrame(layer, hScale, vScale);
+            //var layers = layer.layers().array(),
+                //layersInsideLoop = layers.objectEnumerator();
+            //loopThrough(layersInsideLoop, hScale, vScale, callback);
         } else {
-            callback(layer)
+
+            log("777"+layer + layer.frame());
+            callback(layer);
+            log("7778"+layer + layer.frame());
         }
     }
-}
 
-function maxSizeOfSubLayer(layers) {
-
-    var layersInsideLoop = layers.objectEnumerator(),
-        maxX = 0,
-        maxY = 0,
-        maxWidth = 0,
-        maxHeight = 0;
-    while (sublayer = layersInsideLoop.nextObject()) {
-        maxX = maxX > getLeft(sublayer) ? maxX : getLeft(sublayer);
-        maxY = maxY > getTop(sublayer) ? maxY : getTop(sublayer);
-        maxWidth = maxWidth > getWidth(sublayer) ? maxWidth : getWidth(sublayer);
-        maxHeight = maxHeight > getHeight(sublayer) ? maxHeight : getHeight(sublayer);
-    }
-    return [maxX, maxY, maxWidth, maxHeight];
+    //var layers = artboard.children();
+    //log ("bbb" + layers);
+    //
+    //for (var i = 0; i < layers.count(); i++) {
+    //    var layer = layers[i];
+    //    log("bbb" + layer);
+    //    if (hasGroupAncestry(layer) && !isLayerClass(layer, "MSTextLayer")) return;
+    //
+    //    if (isLayerClass(layer, "MSLayerGroup") || isLayerClass(layer, "MSShapeGroup")) {
+    //
+    //        // 组调高宽,sketch自动调节组内元素的高宽,但是高宽,不能改变文本子元素
+    //        log("666777"+layer + layer.frame());
+    //        scaleFrame(layer, hScale, vScale);
+    //        log("6667778"+layer + layer.frame());
+    //
+    //        //var layers = layer.layers().array(),
+    //        //layersInsideLoop = layers.objectEnumerator();
+    //        //loopThrough(layersInsideLoop, hScale, vScale, callback);
+    //    } else {
+    //
+    //        log("777"+layer + layer.frame());
+    //        callback(layer);
+    //        log("7778"+layer + layer.frame());
+    //    }
+    //}
 }
 
 var isLayerClass = function (layer, className) {
@@ -245,6 +254,17 @@ var isLayerClass = function (layer, className) {
     return Boolean(layer.className() == className);
 };
 
+//
+var hasGroupAncestry = function (layer) {
+
+    var parent = layer.parentGroup();
+    while (parent) {
+
+        if (isLayerClass(parent, "MSLayerGroup") || isLayerClass(parent, "MSShapeGroup")) return true;
+        parent = parent.parentGroup();
+    }
+   return false;
+};
 
 // 将mask存在layer中
 var setAutoresizingConstrains = function (currentLayer, sizeMask) {
@@ -260,38 +280,3 @@ var getAutoresizingConstrains = function (currentLayer) {
     var v = command.valueForKey_onLayer(kAutoresizingMask, currentLayer);
     return v ? v : 0;
 };
-
-//--------------------------------------//
-//               Context                //
-//--------------------------------------//
-var app = NSApplication.sharedApplication(),
-    doc,             // MSDocument object,
-    selection,       // an NSArray of the layer(s) that are selected in the current document
-    plugin,
-    command,
-    page,            // the current page in the current document
-    artboards,       // artboards and slices on the current page
-    selectedArtboard;
-
-function initContext(context) {
-
-    doc = context.document,
-        selection = context.selection,
-        plugin = context.plugin,
-        command = context.command,
-        page = doc.currentPage(),
-        artboards = page.artboards(),
-        selectedArtboard = page.currentArtboard(),
-        currentLayer = (selection.count() > 0) ? selection[0] : undefined;  // 当前画板默认是用户选择的第一个画板
-    //log("------------initContext-----------");
-    //log(doc);
-    //log(selection);
-    //log(page);
-    //log(artboards);
-    //log(artboards.count());
-    //log(selectedArtboard);
-    //log(currentLayer);
-}
-
-
-

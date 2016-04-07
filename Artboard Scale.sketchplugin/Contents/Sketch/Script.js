@@ -94,21 +94,27 @@ var setFixedMasks = function (context) {
 
     // 遍历选中的图层,对六个状态的值单独累加
     var count = selection.count();
+    if (count == 0)
+    {
+        doc.showMessage("请先选择图层");
+        return;
+    }
     for (var i = 0; i < count; i++) {
 
         log(selection[i]);
         var masks = getAutoresizingConstrains (selection[i]);
         log("masks:" + masks);
         for (var j = 0; j < 6; j++) {
-
-            status[j] += masks & (FixedSizeMask.kLeftMargin << j);
+            var mask = (masks & (FixedSizeMask.kLeftMargin << j)) ? 1 : 0;
+            if (i == 0)
+            {
+                status[j] = mask;
+            }
+            else if (status[j] != mask)
+            {
+                status[j] = -1;
+            }
         }
-    }
-
-    // 判断六个状态
-    for (var j = 0; j < 6; j++) {
-
-        status[j] = status[j] == 0 ? 0 : (status[j] / count == (FixedSizeMask.kLeftMargin << j)) ? 1 : -1;
     }
     log("status:"+status);
 
@@ -118,16 +124,18 @@ var setFixedMasks = function (context) {
     log("user choose status :" + status);
     for (var i = 0; i < count; i++) {
 
-        var m = 0;
+        var masks = getAutoresizingConstrains(selection[i]);
         for (var j = 0; j < 6; j++) {
 
-            if (status[j] == 1) {
-
-                m |= (FixedSizeMask.kLeftMargin << j);
+            if (status[j] > 0) {
+                masks |= (FixedSizeMask.kLeftMargin << j);
+            }
+            else if (status[j] == 0) {
+                masks &= ~(FixedSizeMask.kLeftMargin << j);
             }
         }
-        log(selection[i] + " setMask :" + m);
-        setAutoresizingConstrains(selection[i], m);
+        log(selection[i] + " setMask :" + masks);
+        setAutoresizingConstrains(selection[i], masks);
     };
 };
 

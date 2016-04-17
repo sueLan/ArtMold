@@ -20,6 +20,35 @@ var getParentOldHeight = function (layer, scale) {
     return Math.round(layer.parentGroup().frame().height() / parseFloat(scale));
 };
 
+var getOldWidth = function (layer, scale) {
+
+    return Math.round(layer.frame().width() / parseFloat(scale));
+};
+
+var getOldHeight = function (layer, scale) {
+
+    return Math.round(layer.frame().height() / parseFloat(scale));
+};
+
+var getOldLeft = function (layer, scale) {
+
+    return Math.round(layer.frame().x() / parseFloat(scale));
+};
+
+var getOldTop = function (layer, scale) {
+
+    return Math.round(layer.frame().y() / parseFloat(scale));
+};
+
+var getOldRight = function (layer, scale) {
+
+    return (getParentWidth(layer) - getLeft(layer) - getWidth(layer)) / parseFloat(scale);
+};
+
+var getOldBottom = function (layer, scale) {
+
+    return (getParentHeight(layer) - getTop(layer) - getHeight(layer))  / parseFloat(scale);
+};
 
 var getParentWidth = function (layer) {
 
@@ -51,48 +80,14 @@ var getTop = function (layer) {
     return layer.frame().y();
 };
 
-// 获取layer在父节点中的右边距
-var getRightInRecursion = function(layer, hScale) {
+var getRight = function (layer) {
 
-    //if (isLayerClass(layer.parentGroup(), "MSArtboardGroup")) {
-    //
-    //    return getParentWidth(layer) - getLeft(layer) - getWidth(layer);
-    //}
-
-    // 父节点视图或者组元素,在递归遍历的时候,都已经放大过
-    return getParentOldWidth(layer, hScale) -  getLeft(layer) - getWidth(layer);
+    return  getParentWidth(layer) - getLeft(layer) - getWidth(layer);
 };
 
-// 获取layer在父亲节点中的下边距
-var getBottomInrecursion = function(layer, vScale) {
+var getBottom = function (layer) {
 
-    //if (isLayerClass(layer.parentGroup(), "MSArtboardGroup")) {
-    //
-    //    return getParentHeight(layer) - getTop(layer) - getHeight(layer);
-    //}
-
-    // 父节点视图或者组元素,在递归遍历的时候,都已经放大过
-    return getParentOldHeight(layer, vScale) - getTop(layer) - getHeight(layer);
-};
-
-var getParentWidthInrecursion = function (layer, hScale) {
-
-    //if (isLayerClass(layer.parentGroup(), "MSArtboardGroup")) {
-    //
-    //    return getParentWidth(layer);
-    //}
-
-    return getParentOldWidth(layer, hScale);
-};
-
-var getParentHeightInrecursion = function (layer, vScale) {
-
-    //if (isLayerClass(layer.parentGroup(), "MSArtboardGroup")) {
-    //
-    //    return getParentHeight(layer);
-    //}
-
-    return getParentOldWidth(layer, vScale);
+    return getParentHeight(layer) - getTop(layer) - getHeight(layer);
 };
 
 /**
@@ -142,12 +137,11 @@ var scaleFrame = function (layer, hScale, vScale) {
     var y = Math.round(getTop(layer) * parseFloat(vScale));
     var w = Math.round(getWidth(layer) * parseFloat(hScale));
     var h = Math.round(getHeight(layer) * parseFloat(vScale));
-    log(" "+x +" " +y + " " + w + " " + h);
 
     setLeft(layer, x);
     setTop(layer, y);
     setSize(layer, w, h);
-    log("afterScale" + layer.frame());
+    log("afterScale" + layer+layer.frame());
 
     if (isLayerClass(layer, "MSBitmapLayer")) {
 
@@ -194,13 +188,12 @@ function initContext(context) {
  * sketch版本信息
  * @returns {Number}
  */
-var getSketchVersion = function () {
+function getSketchVersion() {
+
     const version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
     var versionNumber = version.stringByReplacingOccurrencesOfString_withString(".", "") + "";
     while(versionNumber.length != 3) {
         versionNumber += "0";
     }
     return parseInt(versionNumber)
-};
-
-
+}

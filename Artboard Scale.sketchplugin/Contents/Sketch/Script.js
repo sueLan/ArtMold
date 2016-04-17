@@ -4,7 +4,8 @@
 @import "Exporter.js"
 @import "Tweaker.js"
 @import "Util.js"
-@import "LayerResizingkit.js"
+@import "LayerResizingManager.js"
+@import "PreprocessArtBoard.js"
 
 // var kScale = 1.5,
 var kAutoresizingMask = "kAutoresizingMask";
@@ -39,7 +40,7 @@ var onRun = function (context) {
     // 默认选择当前画板的尺寸
     var dWidth = getWidth(selectedArtboard),
         dHeight = getHeight(selectedArtboard),
-        dScale = 2;
+        dScale = calArtboardScale(dWidth);
     if (dWidth == 0 || dHeight == 0) {
 
         doc.showMessage("请选择有效画板");
@@ -55,11 +56,12 @@ var onRun = function (context) {
         return;
     }
 
-    var maxXLeftW = getMaxLeftWidth();
+    var maxXLeftW = getMaxLeftWidth(artboards);
     var x = maxXLeftW[0] + maxXLeftW[1];
     var y = getTop(selectedArtboard);
 
-    for (var i in tSizes) {
+    for (var i = 0; i < tSizes.length; i++) {
+
         x += 200;
         x += (i > 0 ? tSizes[i-1][1] : 0);
 
@@ -79,8 +81,35 @@ var onRun = function (context) {
         var vScale = i > 0 ? (tSizes[i][2] / tSizes[i - 1][2]) : (tSizes[i][2] / dHeight);
         log("111hScale = " + hScale);
         log("111vScale = " + vScale);
+        log("222"+tSizes[i][1]);
+        log("222"+tSizes[i][2]);
+        log("222"+tSizes[i][3]);
+        //var targetSize = [tSizes[i][1], tSizes[i][2],tSizes[i][3]];
+        var scaleRatio = dScale / tSizes[i][3];
+        //log("22" + targetSize);
 
-        createTargetArtboards([x, y], hScale, vScale, i, tSizes[i][0]);
+        var artboard = createTargetArtboard([x, y], hScale, vScale, i, tSizes[i][0]);
+
+        var layerEnumerator = artboard.layers().array().objectEnumerator();
+        // 处理符号
+        var version = getSketchVersion();
+        log("version="+version);
+        if (version >= 350 && version < 370) {
+
+            unregisterSymbol(layerEnumerator);
+        }
+
+        // sketch特性:改变MSLayerGroup的frame,其子图层也会发生改变
+        var layers = artboard.layers().array();
+        for (var j = 0; j < layers.count(); j++) {
+
+            log("j" + j);
+            scaleFrame(layers[j], hScale, vScale);
+        }
+        //log("1111size"+tSizes[i]); print undefined
+        //var textRatio = caleTextScaleRatio([dWidth, dHeight, dScale], targetSize);
+
+        processLayer(layerEnumerator, hScale, vScale, scaleRatio);
     }
 };
 
@@ -91,17 +120,19 @@ var setFixedMasks = function (context) {
 
     // 数组每个元素对应FixedSizeMask中的六个状态
     var status = [0, 0, 0, 0, 0, 0];
+    var isAllBitmap = 1;
 
     // 遍历选中的图层,对六个状态的值单独累加
     var count = selection.count();
-    if (count == 0)
-    {
+    if (count == 0) {
         doc.showMessage("请先选择图层");
         return;
     }
     for (var i = 0; i < count; i++) {
 
         log(selection[i]);
+        if (!isLayerClass(selection[i], "MSBitmapLayer")) isAllBitmap = 0;
+
         var masks = getAutoresizingConstrains (selection[i]);
         log("masks:" + masks);
         for (var j = 0; j < 6; j++) {
@@ -116,8 +147,17 @@ var setFixedMasks = function (context) {
             }
         }
     }
+
     log("status:"+status);
 
+    // 位图默认以宽度为基准缩放
+    if (isAllBitmap) {
+
+        if (status[4] && status[5]) {
+
+            status[5] = -2;
+        }
+    }
     // 弹出选择框
     status = runTweaker(status[0], status[1], status[2], status[3], status[4], status[5]);
 

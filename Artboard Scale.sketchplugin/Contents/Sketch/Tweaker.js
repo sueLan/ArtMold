@@ -1,7 +1,12 @@
-// 参数：插件实例和六项状态，0 = Flexible, 1 = Fixed, -1 = Mixed
-// 返回：设定的六项状态数组，0 = Flexible, 1 = Fixed, -1 = NoChange
-function runTweaker(lState, rState, tState, bState, wState, hState)
+// 参数：插件实例和六项状态，0 = Flexible, 1 = Fixed, -1 = Mixed, -2 = apsectRatioFix
+// 返回：设定的六项状态数组，0 = Flexible, 1 = Fixed, -1 = NoChange,
+
+function runTweaker(layer, lState, rState, tState, bState, wState, hState)
 {
+
+    // MSBitmapLayer有个特殊属性:高宽比例固定.UI视图限制选择:只能选择宽或者高缩放,另一边会随之改变
+    var isBitmapLayer =  isLayerClass(layer, "MSBitmapLayer");
+
     //
     var w = 200, h = 200;
     var view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, w/**2+20*/, h)];
@@ -29,6 +34,7 @@ function runTweaker(lState, rState, tState, bState, wState, hState)
     // 显示对话框
     var alertWindow = COSAlertWindow.new();
     alertWindow.addButtonWithTitle(@"OK");
+    alertWindow.addButtonWithTitle(@"cancel");
     alertWindow.setMessageText(@"编辑缩放属性");
     alertWindow.setInformativeText(@"请选择缩放或固定间距、尺寸");
     alertWindow.setAccessoryView(view); // 不用 addAccessoryView，否则宽度强制被固定为300
@@ -59,11 +65,30 @@ function runTweaker(lState, rState, tState, bState, wState, hState)
         button.state = state;
         updateImage(button);
         button.cell().imageScaling = 1;
-        [button setCOSJSTargetFunction:function(sender) {updateImage(sender);}];
+        [button setCOSJSTargetFunction:function(sender) {ClickHandler(sender);}];
         [view addSubview:button];
         return button;
     }
 
+    function ClickHandler(sender)
+    {
+        if (isBitmapLayer)
+        {
+            if (sender.state == 1)
+            {
+                if (sender === wButton)
+                {
+                    hButton.state = -2;
+                }
+
+                if (sender === hButton)
+                {
+                    wButton.state = -2;
+                }
+            }
+        }
+        updateImage(sender);
+    }
     // 按状态和尺寸更新按钮图片
     function updateImage(sender)
     {
@@ -82,11 +107,13 @@ function runTweaker(lState, rState, tState, bState, wState, hState)
         var v = w < h;
         if (v)
         {
+            // 垂直方向的按钮的竖直线
             [path moveToPoint:NSMakePoint(w/2,3)];
             [path lineToPoint:NSMakePoint(w/2,h-3)];
 
             if (state != 0)
             {
+                // 垂直方向的按钮的横直线
                 [path moveToPoint:NSMakePoint(0, 3)];
                 [path lineToPoint:NSMakePoint(w, 3)];
                 [path moveToPoint:NSMakePoint(0, h-3)];
@@ -94,6 +121,7 @@ function runTweaker(lState, rState, tState, bState, wState, hState)
             }
             if (state != 1)
             {
+                // 斜线
                 [path moveToPoint:NSMakePoint(0, w/2)];
                 [path lineToPoint:NSMakePoint(w/2, 3)];
                 [path lineToPoint:NSMakePoint(w, w/2)];
@@ -101,6 +129,12 @@ function runTweaker(lState, rState, tState, bState, wState, hState)
                 [path moveToPoint:NSMakePoint(0, h-w/2)]; 
                 [path lineToPoint:NSMakePoint(w/2, h-3)];
                 [path lineToPoint:NSMakePoint(w, h-w/2)];
+            }
+
+            if (state == -2)
+            {
+                [path moveToPoint:NSMakePoint(0, h/2)];
+                [path lineToPoint:NSMakePoint(w, h/2)];
             }
         }
         else
@@ -124,6 +158,12 @@ function runTweaker(lState, rState, tState, bState, wState, hState)
                 [path moveToPoint:NSMakePoint(w-h/2, 0)]; 
                 [path lineToPoint:NSMakePoint(w-3, h/2)];
                 [path lineToPoint:NSMakePoint(w-h/2, h)];
+            }
+
+            if (state == -2)
+            {
+                [path moveToPoint:NSMakePoint(0, h/2)];
+                [path lineToPoint:NSMakePoint(w, h/2)];
             }
         }
 

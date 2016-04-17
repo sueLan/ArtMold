@@ -4,7 +4,7 @@
     {
       "script" : "Script.js",
       "handler" : "setFixedMasks",
-      "shortcut" : "cmd shift m",
+      "shortcut" : "cmd l",
       "name" : "Artboard Mask",
       "identifier" : "com.rongyanzry.layermask"
     },

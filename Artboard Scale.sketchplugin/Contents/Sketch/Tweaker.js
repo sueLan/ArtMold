@@ -1,15 +1,15 @@
-// 参数：插件实例和六项状态，0 = Flexible, 1 = Fixed, -1 = Mixed, -2 = apsectRatioFix
+// 参数：插件实例和六项状态，0 = Flexible, 1 = Fixed, -1 = Mixed; 对于wState和hState还有 2 = apsectRatioFix,宽高比固定
 // 返回：设定的六项状态数组，0 = Flexible, 1 = Fixed, -1 = NoChange,
-
-function runTweaker(layer, lState, rState, tState, bState, wState, hState)
+function runTweaker( lState, rState, tState, bState, wState, hState)
 {
 
     // MSBitmapLayer有个特殊属性:高宽比例固定.UI视图限制选择:只能选择宽或者高缩放,另一边会随之改变
-    var isBitmapLayer =  isLayerClass(layer, "MSBitmapLayer");
+    //log("134"+layer);
+    //var isBitmapLayer =  isLayerClass(layer, "MSBitmapLayer");
 
     //
     var w = 200, h = 200;
-    var view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, w/**2+20*/, h)];
+    var view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, w*2+20, h)];
     //view.wantsLayer = 1;
     //[[view layer] setBackgroundColor:[[NSColor redColor] CGColor]];
     
@@ -18,18 +18,31 @@ function runTweaker(layer, lState, rState, tState, bState, wState, hState)
     addBox(frame, [NSColor whiteColor]);
     addBox(CGRectInset(frame, w/4, h/4), [NSColor colorWithDeviceWhite:0.98 alpha:1]);
 
+
     // 添加预览框
     // frame.origin.x += w + 20;
     // var outer = addBox(frame, [NSColor whiteColor]);
     // var inner = addBox(CGRectInset(frame, w/4, h/4), [NSColor colorWithDeviceWhite:0.98 alpha:1]);
+
+    // 添加选择框
+    var iconButton = addChekckButton("Icon"     , w + 20    ,h        , 60, 20);
+    var textButton = addChekckButton("Text"     , w + 20    ,h - 30   , 60, 20);
+    var navButton = addChekckButton("Navigation", w + 20    ,h - 30*2 , 60, 20);
+    var cellButton = addChekckButton("Cell"      , w + 20    ,h - 30*3 , 60, 20);
+    var bannerButton = addChekckButton("Banner" , w + 20    ,h - 30*4 , 60, 20);
+    [iconButton setCOSJSTargetFunction:function(sender) {onClickIconButton(sender);}];
+    [textButton setCOSJSTargetFunction:function(sender) {onClickTextButton(sender);}];
+    [navButton setCOSJSTargetFunction:function(sender) {onClickNavigation(sender);}];
+    [cellButton setCOSJSTargetFunction:function(sender) {onClickCell(sender);}];
+    [bannerButton setCOSJSTargetFunction:function(sender) {onClickBanner(sender);}];
 
     // 添加按钮
     var lButton = addButton(lState, 0           , h/2 - h/16    , w/4, h/8);
     var rButton = addButton(rState, w*3/4       , h/2 - h/16    , w/4, h/8);
     var tButton = addButton(tState, w/2 - w/16  , h*3/4 - 1     , w/8, h/4);
     var bButton = addButton(bState, w/2 - w/16  , 0             , w/8, h/4);
-    var wButton = addButton(wState, w/4         , h/2 - h/16    , w/2, h/8);
-    var hButton = addButton(hState, w/2 - w/16  , h/4           , w/8, h/2);
+    var wButton = addSideButton(wState, w/4         , h/2 - h/16    , w/2, h/8);
+    var hButton = addSideButton(hState, w/2 - w/16  , h/4           , w/8, h/2);
     
     // 显示对话框
     var alertWindow = COSAlertWindow.new();
@@ -42,7 +55,7 @@ function runTweaker(layer, lState, rState, tState, bState, wState, hState)
     {
         return [-1, -1, -1, -1, -1, -1];
     }
-    return [lButton.state(), rButton.state(), tButton.state(), bButton.state(), wButton.state(), hButton.state()];
+    return [lButton.state(), rButton.state(), tButton.state(), bButton.state(), wButton.tag(), hButton.tag()];
 
     //
     function addBox(frame, color)
@@ -62,33 +75,164 @@ function runTweaker(layer, lState, rState, tState, bState, wState, hState)
         button.bezelStyle = 1;
         button.bordered = 0;
         button.allowsMixedState = (state < 0);  // 仅初始化状态为混合态时允许
-        button.state = state;
+        button.tag = state;
         updateImage(button);
         button.cell().imageScaling = 1;
-        [button setCOSJSTargetFunction:function(sender) {ClickHandler(sender);}];
+        [button setCOSJSTargetFunction:function(sender) {updateImage(sender);}];
         [view addSubview:button];
         return button;
     }
 
-    function ClickHandler(sender)
+    // 高度或者宽度
+    function addSideButton(state, x, y, w, h)
     {
-        if (isBitmapLayer)
-        {
-            if (sender.state == 1)
-            {
-                if (sender === wButton)
-                {
-                    hButton.state = -2;
-                }
+        var button = [[NSButton alloc] initWithFrame:NSMakeRect(x, y, w, h)];
+        [button setButtonType:2];
+        button.bezelStyle = 1;
+        button.bordered = 0;
+        button.tag = state;
+        updateLine(button);
+        button.cell().imageScaling = 1;
+        [button setCOSJSTargetFunction:function(sender) {updateLine(sender);}];
+        [view addSubview:button];
+        return button;
+    }
 
-                if (sender === hButton)
-                {
-                    wButton.state = -2;
-                }
+    function addChekckButton(title, x, y, w, h)
+    {
+        var button = [[NSButton alloc] initWithFrame:NSMakeRect(x, y, w, h)];
+        [button setButtonType:NSSwitchButton];
+        button.bezelStyle = 0;
+        button.title = title;
+        [view addSubview:button];
+        return button;
+    }
+
+    function  updateLine(sender)
+    {
+        var preState = sender.tag();
+        print("prestate ="+preState);
+        var state = (preState == 2) ? -1 : preState + 1;
+        //switch (preState)
+        //{
+        //    case 0:
+        //        state = 1;
+        //        break;
+        //    case 1:
+        //        state = 2;
+        //        break;
+        //    case 2:
+        //        state = -1;
+        //        break;
+        //    case -1:
+        //        state = 0;
+        //        break;
+        //}
+        print("state ="+state);
+        //var state = sender.tag();
+        var size = sender.frame().size;
+        var w = size.width, h = size.height;
+
+        var image = [NSImage imageWithSize:size];
+        [image lockFocus];
+        [[NSColor colorWithCalibratedRed:0.9 green:0 blue:0 alpha:((state==-1)?0.2:1)] set];
+
+        var path = [NSBezierPath bezierPath];
+        //path.lineWidth = 2;
+        var v = w < h;
+        if (v)
+        {
+            // 垂直方向的按钮的竖直线
+            [path moveToPoint:NSMakePoint(w/2,3)];
+            [path lineToPoint:NSMakePoint(w/2,h-3)];
+
+            switch (state)
+            {
+                case 2:
+                    [path moveToPoint:NSMakePoint(0, w/2)];
+                    [path lineToPoint:NSMakePoint(w/2, 3)];
+                    [path lineToPoint:NSMakePoint(w, w/2)];
+
+                    [path moveToPoint:NSMakePoint(0, h-w/2)];
+                    [path lineToPoint:NSMakePoint(w/2, h-3)];
+                    [path lineToPoint:NSMakePoint(w, h-w/2)];
+                    [path setLineDash:5.5 count:3 phase:0];
+                    break;
+                case -1:
+                    // 垂直方向的按钮的横直线
+                    [path moveToPoint:NSMakePoint(0, 3)];
+                    [path lineToPoint:NSMakePoint(w, 3)];
+                    [path moveToPoint:NSMakePoint(0, h-3)];
+                    [path lineToPoint:NSMakePoint(w, h-3)];
+
+                case 0:
+                    // 斜线
+                    [path moveToPoint:NSMakePoint(0, w/2)];
+                    [path lineToPoint:NSMakePoint(w/2, 3)];
+                    [path lineToPoint:NSMakePoint(w, w/2)];
+
+                    [path moveToPoint:NSMakePoint(0, h-w/2)];
+                    [path lineToPoint:NSMakePoint(w/2, h-3)];
+                    [path lineToPoint:NSMakePoint(w, h-w/2)];
+                    break;
+                case 1:
+
+                    // 垂直方向的按钮的横直线
+                    [path moveToPoint:NSMakePoint(0, 3)];
+                    [path lineToPoint:NSMakePoint(w, 3)];
+                    [path moveToPoint:NSMakePoint(0, h-3)];
+                    [path lineToPoint:NSMakePoint(w, h-3)];
+                    break;
             }
         }
-        updateImage(sender);
+        else
+        {
+            // 水平方向的按钮
+            [path moveToPoint:NSMakePoint(3, h/2)];
+            [path lineToPoint:NSMakePoint(w-3, h/2)];
+            switch (state)
+            {
+                case 2:
+                    [path moveToPoint:NSMakePoint(h/2, 0)];
+                    [path lineToPoint:NSMakePoint(3, h/2)];
+                    [path lineToPoint:NSMakePoint(h/2, h)];
+
+                    [path moveToPoint:NSMakePoint(w-h/2, 0)];
+                    [path lineToPoint:NSMakePoint(w-3, h/2)];
+                    [path lineToPoint:NSMakePoint(w-h/2, h)];
+                    [path setLineDash:5.5 count:3 phase:0];
+                    break;
+                case -1:
+                    [path moveToPoint:NSMakePoint(3, 0)];
+                    [path lineToPoint:NSMakePoint(3, h)];
+                    [path moveToPoint:NSMakePoint(w-3, 0)];
+                    [path lineToPoint:NSMakePoint(w-3, h)];
+                case 0:
+                    [path moveToPoint:NSMakePoint(h/2, 0)];
+                    [path lineToPoint:NSMakePoint(3, h/2)];
+                    [path lineToPoint:NSMakePoint(h/2, h)];
+
+                    [path moveToPoint:NSMakePoint(w-h/2, 0)];
+                    [path lineToPoint:NSMakePoint(w-3, h/2)];
+                    [path lineToPoint:NSMakePoint(w-h/2, h)];
+                    break;
+                case 1:
+                    [path moveToPoint:NSMakePoint(3, 0)];
+                    [path lineToPoint:NSMakePoint(3, h)];
+                    [path moveToPoint:NSMakePoint(w-3, 0)];
+                    [path lineToPoint:NSMakePoint(w-3, h)];
+                    break;
+            }
+        }
+
+        [path stroke];
+        [image unlockFocus];
+
+        sender.image = image;
+        //[sender setIntegerValue:state];
+        sender.tag = state;
     }
+
     // 按状态和尺寸更新按钮图片
     function updateImage(sender)
     {
@@ -103,14 +247,54 @@ function runTweaker(layer, lState, rState, tState, bState, wState, hState)
 
         var path = [NSBezierPath bezierPath];
         //path.lineWidth = 2;
-
+        print(state);
         var v = w < h;
         if (v)
         {
+            var shadow;
+
             // 垂直方向的按钮的竖直线
             [path moveToPoint:NSMakePoint(w/2,3)];
             [path lineToPoint:NSMakePoint(w/2,h-3)];
-
+            //switch (state)
+            //{
+            //    case -2:
+            //        var dash = [5,5,5];
+            //        [path setLineDash:dash count:3 phase:0];
+            //        break;
+            //    case 0:
+            //        // 斜线
+            //        [path moveToPoint:NSMakePoint(0, w/2)];
+            //        [path lineToPoint:NSMakePoint(w/2, 3)];
+            //        [path lineToPoint:NSMakePoint(w, w/2)];
+            //
+            //        [path moveToPoint:NSMakePoint(0, h-w/2)];
+            //        [path lineToPoint:NSMakePoint(w/2, h-3)];
+            //        [path lineToPoint:NSMakePoint(w, h-w/2)];
+            //        break;
+            //    case 1:
+            //        // 垂直方向的按钮的横直线
+            //        [path moveToPoint:NSMakePoint(0, 3)];
+            //        [path lineToPoint:NSMakePoint(w, 3)];
+            //        [path moveToPoint:NSMakePoint(0, h-3)];
+            //        [path lineToPoint:NSMakePoint(w, h-3)];
+            //        break;
+            //    case -1:
+            //        [NSGraphicsContext saveGraphicsState];
+            //        shadow = [[NSShadow alloc] init];
+            //        [shadow setShadowColor:[NSColor blueColor]];
+            //        [shadow setShadowOffset:NSMakeSize(3.0, -3.0)];
+            //        [shadow setShadowBlurRadius:10];
+            //        [shadow setShadowColor:[[NSColor redColor] colorWithAlphaComponent:0.3]];
+            //        [shadow set];
+            //        break;
+            //}
+            //if (shadow) {
+            //
+            //    // 垂直方向的按钮的竖直线
+            //    [path moveToPoint:NSMakePoint(w/2,3)];
+            //    [path lineToPoint:NSMakePoint(w/2,h-3)];
+            //}
             if (state != 0)
             {
                 // 垂直方向的按钮的横直线
@@ -126,15 +310,9 @@ function runTweaker(layer, lState, rState, tState, bState, wState, hState)
                 [path lineToPoint:NSMakePoint(w/2, 3)];
                 [path lineToPoint:NSMakePoint(w, w/2)];
 
-                [path moveToPoint:NSMakePoint(0, h-w/2)]; 
+                [path moveToPoint:NSMakePoint(0, h-w/2)];
                 [path lineToPoint:NSMakePoint(w/2, h-3)];
                 [path lineToPoint:NSMakePoint(w, h-w/2)];
-            }
-
-            if (state == -2)
-            {
-                [path moveToPoint:NSMakePoint(0, h/2)];
-                [path lineToPoint:NSMakePoint(w, h/2)];
             }
         }
         else
@@ -155,25 +333,86 @@ function runTweaker(layer, lState, rState, tState, bState, wState, hState)
                 [path lineToPoint:NSMakePoint(3, h/2)];
                 [path lineToPoint:NSMakePoint(h/2, h)];
 
-                [path moveToPoint:NSMakePoint(w-h/2, 0)]; 
+                [path moveToPoint:NSMakePoint(w-h/2, 0)];
                 [path lineToPoint:NSMakePoint(w-3, h/2)];
                 [path lineToPoint:NSMakePoint(w-h/2, h)];
             }
-
-            if (state == -2)
-            {
-                [path moveToPoint:NSMakePoint(0, h/2)];
-                [path lineToPoint:NSMakePoint(w, h/2)];
-            }
+            // 水平方向
+            //[path moveToPoint:NSMakePoint(3, h/2)];
+            //[path lineToPoint:NSMakePoint(w-3, h/2)];
+            //switch (state)
+            //{
+            //    case -2:
+            //        var dash = [5,5,5];
+            //        [path setLineDash:dash count:3 phase:0];
+            //        break;
+            //    case 0:
+            //        // 斜线
+            //        [path moveToPoint:NSMakePoint(h/2, 0)];
+            //        [path lineToPoint:NSMakePoint(3, h/2)];
+            //        [path lineToPoint:NSMakePoint(h/2, h)];
+            //
+            //        [path moveToPoint:NSMakePoint(w-h/2, 0)];
+            //        [path lineToPoint:NSMakePoint(w-3, h/2)];
+            //        [path lineToPoint:NSMakePoint(w-h/2, h)];
+            //        break;
+            //    case 1:
+            //        [path moveToPoint:NSMakePoint(3, 0)];
+            //        [path lineToPoint:NSMakePoint(3, h)];
+            //        [path moveToPoint:NSMakePoint(w-3, 0)];
+            //        [path lineToPoint:NSMakePoint(w-3, h)];
+            //        break;
+            //    case -1:
+            //        [NSGraphicsContext saveGraphicsState];
+            //        shadow = [[NSShadow alloc] init];
+            //        [shadow setShadowColor:[NSColor blueColor]];
+            //        [shadow setShadowOffset:NSMakeSize(0, 3.0)];
+            //        [shadow setShadowBlurRadius:5];
+            //        [shadow setShadowColor:[[NSColor redColor] colorWithAlphaComponent:0.3]];
+            //        [shadow set];
+            //        break;
+            //}
+            //if (shadow) {
+            //    // 水平方向
+            //    [path moveToPoint:NSMakePoint(3, h/2)];
+            //    [path lineToPoint:NSMakePoint(w-3, h/2)];
+            //}
         }
 
         [path stroke];
         [image unlockFocus];
+        //if (shadow) {
+        //    [shadow setShadowColor:[[NSColor blackColor] colorWithAlphaComponent:0.3]];
+        //    [NSGraphicsContext restoreGraphicsState];
+        //    [shadow release];
+        //}
 
         sender.image = image;
     }
 
+    function onClickTextButton(sender) {
 
+        if (sender.state == 0) return;
+
+
+    }
+
+    function onClickIconButton(sender) {
+
+    }
+
+    function onClickNavigation(sender) {
+        lButton.state = 0;
+
+    }
+
+    function onClickCell(sender) {
+
+    }
+
+    function onClickBanner(sender) {
+
+    }
     /*/
     function animatePreview()
     {

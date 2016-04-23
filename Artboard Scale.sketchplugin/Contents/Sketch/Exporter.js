@@ -1,19 +1,10 @@
+@import "DimensionModel.js"
 
 // 参数：传入当前模型的尺寸和比例
 // 返回：返回选定的导出项目数组
 function runExporter(width, height, scale)
 {
-    var items = [
-        ["Customize", 1000, 1000, 2],
-        ["Android Device", 1080, 1920, 3],
-        ["iPad Retina", 1536, 2048, 2],
-        //["iPhone 3Gs", 320, 480, 1],
-        ["iPhone 6/6s plus", 1080, 1920, 3],
-        ["iPhone 6/6s", 750, 1334, 2],
-        ["iPhone 5/5s/5c", 768, 1136, 2],
-        ["iPhone 4/4s", 640, 960, 2]
-    ];
-
+    var items = getDimensionsModels();
     //
     var w = 300, h = items.length * 30;
     var view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, w, h)];

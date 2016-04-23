@@ -159,6 +159,9 @@ var setFixedMasks = function (context) {
         }
     }
     // 弹出选择框
+    // debug
+    //status = runTweaker(-3, -3, -3, -3, -3, -3);
+
     status = runTweaker(status[0], status[1], status[2], status[3], status[4], status[5]);
 
     log("user choose status :" + status);

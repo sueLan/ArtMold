@@ -60,11 +60,15 @@ function runExporter(width, height, scale)
     // 显示对话框
     var alertWindow = COSAlertWindow.new();
     alertWindow.addButtonWithTitle("OK");
+    alertWindow.addButtonWithTitle("cancel");
     alertWindow.setMessageText(width + "x" + height + "@" + scale + "X");
     alertWindow.setInformativeText("请勾选要生成的其它尺寸模型");
     alertWindow.setAccessoryView(view); // 不用 addAccessoryView，否则宽度强制被固定为300
-    alertWindow.runModal();
-
+    //alertWindow.runModal();
+    if (alertWindow.runModal() != "1000")
+    {
+        return [ ];
+    }
     //
     var k = 0;
     var ret = [];

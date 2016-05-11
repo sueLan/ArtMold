@@ -130,9 +130,9 @@ var scaleFrame = function (layer, hScale, vScale) {
     // MSBitmapLayer的frame这样计算错误很大,js用浮点数表示
     //setWidth(layer, getWidth(layer)* hScale);
     //setHeight(layer,  getHeight(layer) * vScale);
-    log("scaleFrame-layer"+layer+layer.frame());
-    log("scaleFrame-hScale" + hScale);
-    log("scaleFrame-vScale" + vScale);
+    log("scaleFrame-layer ="+layer+layer.frame());
+    log("scaleFrame-hScale =" + hScale);
+    log("scaleFrame-vScale =" + vScale);
     var x = Math.round(getLeft(layer) * parseFloat(hScale));
     var y = Math.round(getTop(layer) * parseFloat(vScale));
     var w = Math.round(getWidth(layer) * parseFloat(hScale));
@@ -140,18 +140,31 @@ var scaleFrame = function (layer, hScale, vScale) {
 
     setLeft(layer, x);
     setTop(layer, y);
-    setSize(layer, w, h);
+    //setSize(layer, w, h);
+    setWidth(layer, w);
+    setHeight(layer, h);
     log("afterScale" + layer+layer.frame());
 
-    if (isLayerClass(layer, "MSBitmapLayer")) {
+    //if (isLayerClass(layer, "MSBitmapLayer")) {
 
         //scaleBitmap (layer, x, y, w, h);
-        log("8888bitmap  "+layer);
+        //log("8888bitmap  "+layer);
         //resizeImage (layer, w, h);
         //log("layer" + hScale);
         //return;
-        return;
-    }
+        //return;
+    //}
+    //if (getSketchVersion() >= 370) {
+    //
+    //    scalesymbolIinstance(layer);
+    //}
+};
+
+var scaleSize = function (layer, hScale, vScale) {
+
+    var w = Math.round(getWidth(layer) * parseFloat(hScale));
+    var h = Math.round(getHeight(layer) * parseFloat(vScale));
+    setSize(layer, w, h);
 };
 
 var scaleOrigin = function (layer, hScale, vScale) {
@@ -161,28 +174,6 @@ var scaleOrigin = function (layer, hScale, vScale) {
     setLeft(layer, x);
     setTop(layer, y);
 };
-
-
-
-//--------------------------------------//
-//               Context                //
-//--------------------------------------//
-
-/**
- * 初始化插件的运行上下文
- * @param context
- */
-function initContext(context) {
-
-    doc = context.document,
-        selection = context.selection,
-        plugin = context.plugin,
-        command = context.command,
-        page = doc.currentPage(),
-        artboards = page.artboards(),   // 只读
-        selectedArtboard = page.currentArtboard(),
-        currentLayer = (selection.count() > 0) ? selection[0] : undefined;  // 当前画板默认是用户选择的第一个画板
-}
 
 /**
  * sketch版本信息
@@ -196,4 +187,29 @@ function getSketchVersion() {
         versionNumber += "0";
     }
     return parseInt(versionNumber)
+}
+
+// 屏幕虚拟坐标宽度比例: 用像素尺寸跟屏幕scale值计算
+function calcLogicSizeScaleRatio(oldPixelSide, newPiexlSide, oldScale, newScale) {
+
+    var ratio = newPiexlSide / newScale  / (oldPixelSide / oldScale);
+    return parseFloat(ratio, 4);
+}
+
+/**
+ *
+ * @param oldPixelSide
+ * @param newPixelSide
+ * @param oldScale
+ * @param newScale
+ * @returns {number} 屏幕宽度一样: 缩放比例 = newScale / oldScale ; 屏幕宽度不一样:缩放比例 = 屏幕宽度比 * scale比值
+ */
+function calcSizeScaleRatio(oldPixelSide, newPixelSide, oldScale, newScale) {
+
+    var oldPointSize = parseInt(oldPixelSide / oldScale);
+    var newPointSize = parseInt(newPixelSide / newScale);
+
+    if (oldPointSize == newPointSize) return newPixelSide / oldPixelSide;
+
+    return newPointSize / oldPointSize * (newScale / oldScale);
 }

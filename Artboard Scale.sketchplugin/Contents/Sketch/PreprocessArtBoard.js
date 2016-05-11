@@ -96,7 +96,7 @@ function getMaxLeftWidth(artboards) {
 // todo
 function calArtboardScale (width) {
 
-    if (width === 1) return 1;
+    if (width === 320) return 1;
     if (width === 640 || width === 750) return 2;
     return 3;
 }

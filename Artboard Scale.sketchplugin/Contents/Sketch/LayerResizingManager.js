@@ -2,78 +2,92 @@
  * Created by rongyanzry on 16/4/7.
  */
 
-//
-//function processLayer(layer, hScale, vScale, textRatio) {
-//
-//    if (layer == undefined) return;
-//    var fixedMasks = getAutoresizingConstrains(layer);
-//
-//    if (fixedMasks == 0 || fixedMasks == undefined || fixedMasks == null) {
-//
-//        scaleFrame(layer, hScale, vScale);
-//    } else {
-//
-//        resizingLayerWithMask(layer, fixedMasks, hScale, vScale);
-//    }
-//}
+
+/**
+ *
+ * @param layer
+ * @param layerType
+ * @param screenRatio 屏幕尺寸比例
+ * @param scaleFactorRatio 屏幕scale比例
+ * @param widthScale 宽度缩放比例因子
+ * @param heightScale 高度缩放比例因子
+ */
+function resizingLayer (layer, layerType, screenRatio, scaleFactorRatio, widthScale, heightScale) {
+
+    resizingLayerWithMask(layer, screenRatio, scaleFactorRatio, widthScale, heightScale);
+    switch (layerType)
+    {
+        case LayerType.kNone :
+        case LayerType.kBanner:
+        case LayerType.kCell:
+        case LayerType.kIcon:
+            break;
+        case LayerType.kNavigation:
+            updateNavigationBar(layer, screenRatio, widthScale);
+            break;
+        case LayerType.kText:
+            break;
+    }
+}
 
 // 放大或缩小视图
-function resizingLayerWithMask(layer, sizeMask, hScale, vScale) {
+function resizingLayerWithMask(layer, screenRatio, scaleFactorRatio, widthScale, heightScale) {
 
     if (layer == undefined) return;
-    if (sizeMask == 0 || sizeMask == undefined || sizeMask == null) return;
+
+    var state = getLayerMasks(layer);
+    log("state:" + state);
 
     // 1 求水平固定不变的宽度
     var fixedW = 0;
-    if ((sizeMask & FixedSizeMask.kLeftMargin)) fixedW += getLeft(layer);
-    if ((sizeMask & FixedSizeMask.kWidth)) fixedW += getWidth(layer);
-    if ((sizeMask & FixedSizeMask.kRightMargin)) fixedW += getRight(layer);
-    fixedW = Math.round(fixedW / parseFloat(hScale));
+    if (state[3] == 1) fixedW += getLeft(layer);
+    if (state[4] == 1) fixedW += getWidth(layer);
+    if (state[1] == 1) fixedW += getRight(layer);
+    fixedW = Math.round(fixedW / parseFloat(widthScale, 2));
     // 2 水平缩放的比例 = oldSize / targetSize
-    var hflexibleRatio = (getParentOldWidth(layer, hScale) - fixedW) / (getParentWidth(layer) - fixedW);
-    // 3 求水平自动改变尺寸的宽度
-    if ((sizeMask & FixedSizeMask.kLeftMargin) == 0) {
+    var hflexibleRatio = (getParentOldWidth(layer, widthScale) - fixedW) / (getParentWidth(layer) - fixedW);
+    // 3 求水平自动改变尺寸的左边距和宽度
+    if (state[3] == 0) {
 
-        setLeft(layer, getOldLeft(layer, hScale) / hflexibleRatio);
-    } else {
+        setLeft(layer, getOldLeft(layer, widthScale) / hflexibleRatio);
+    } else if (state[3] == 1) {
 
-        setLeft(layer, getOldLeft(layer, hScale));
+        setLeft(layer, getOldLeft(layer, widthScale) * scaleFactorRatio);
     }
-
-    // 4 resize frame
-    if ((sizeMask & FixedSizeMask.kWidth) == 0) {
+    if (state[4] == 0) {
 
         setWidth(layer, getOldWidth(layer) / hflexibleRatio);
-    } else {
+    } else if (state[4] == 1) {
 
-        setWidth(layer, getOldWidth(layer, hScale));
+        setWidth(layer, getOldWidth(layer, widthScale) * scaleFactorRatio);
     }
+    log("fixedW1:" + layer.frame());
 
     //
     fixedW = 0;
-    if ((sizeMask & FixedSizeMask.kTopMargin)) fixedW += getTop(layer);
-    if (sizeMask & FixedSizeMask.kHeight) fixedW += getHeight(layer);
-    if (sizeMask & FixedSizeMask.kBottomMargin) fixedW += getBottom(layer);
-    fixedW = Math.round(fixedW / parseFloat(vScale));
+    if (state[0] == 1) fixedW += getTop(layer);
+    if (state[5] == 1) fixedW += getHeight(layer);
+    if (state[2] == 1) fixedW += getBottom(layer);
+    fixedW = Math.round(fixedW / parseFloat(heightScale, 2));
 
-    var vflexibleRatio = (getParentOldHeight(layer, vScale) - fixedW) / (getParentHeight(layer) - fixedW);
+    var vflexibleRatio = (getParentOldHeight(layer, heightScale) - fixedW) / (getParentHeight(layer) - fixedW);
 
-    if ((sizeMask & FixedSizeMask.kTopMargin) == 0) {
+    if (state[0] == 0) {
 
-        setTop(layer, getOldTop(layer, vScale) / vflexibleRatio);
-    } else {
+        setTop(layer, getOldTop(layer, heightScale) / vflexibleRatio);
+    } else if (state[0] == 1) {
 
-        setTop(layer, getOldTop(layer, vScale));
+        setTop(layer, getOldTop(layer, heightScale) * scaleFactorRatio);
     }
 
-    if ((sizeMask & FixedSizeMask.kHeight) == 0) {
+    if (state[5] == 0) {
 
-        setHeight(layer, getOldHeight(layer, vScale) / vflexibleRatio);
-    } else {
+        setHeight(layer, getOldHeight(layer, heightScale) / vflexibleRatio);
+    } else if (state[5] == 1) {
 
-        setHeight(layer, getOldHeight(layer, vScale));
+        setHeight(layer, getOldHeight(layer, heightScale) * scaleFactorRatio);
     }
-    return [hflexibleRatio, vflexibleRatio];
+    log("fixedW2:" + layer.frame());
 }
 
 function isLayerClass(layer, className) {
@@ -97,56 +111,121 @@ function ancestryIsGroup(layer) {
     return false;
 }
 
-function unregisterSymbol(layerLoop) {
+function preProcessLayers(artboard) {
 
-    var layer = undefined;
-    while (layer = layerLoop.nextObject()) {
+    // 处理符号,否则,改变符号的样式,会在所有画板和page中起作用
+    var version = getSketchVersion();
+    log("version="+version);
 
+    var childLayers = artboard.children();
+    var count = childLayers.count();
+    for (var i = 0; i < count; i++) {
+
+        var layer = childLayers[i];
         if (isLayerClass(layer, "MSLayerGroup")) {
+
+            // 取消group的锁定因素
+            layer.setConstrainProportions(0);
+            continue;
+        }
+        if (version >= 350 && version < 370) {
 
             if (layer.isSymbol()) {
 
                 layer.unregisterAsSymbolIfNecessary();
             }
-            var layers = layer.layers().array(),
-                layersInsideLoop = layers.objectEnumerator();
-            unregisterSymbol(layersInsideLoop);
-            // loopThrough后面引用layer,为null
+        } else if (version >= 370) {
+
+            if (isLayerClass(layer, "MSSymbolInstance")) {
+
+                layer.detachByReplacingWithGroup();
+            }
         }
     }
 }
 
-function processLayer(layerLoop, hScale, vScale, scaleRatio) {
+function scaleTextLayer(layer, scale) {
 
-    var layer = undefined;
+    if (!isLayerClass(layer, "MSTextLayer")) return;
+    var x = getLeft(layer);
+    var y = getTop(layer);
+    log("layer-fontSize,before:" + layer.fontSize());
+    var s = layer.fontSize() * parseFloat(scale);
+    layer.fontSize = Math.floor(s);
+    log("layer-fontSize:" + layer.fontSize());
+    // 行高,sketch中默认的行高与开发的写出的行高不一致;需要换算
+    layer.lineHeight = 2 * Math.ceil(layer.fontSize() / 10) + layer.fontSize();
+    setLeft(layer, x);
+    setTop(layer, y);
+}
+
+function processTextLayer(layerLoop, scale) {
+
+    var layer;
 
     while (layer = layerLoop.nextObject()) {
 
         if (isLayerClass(layer, "MSLayerGroup")) {
-
+            log("enableAutomaticScaling = " + layer.enableAutomaticScaling());
             var layers = layer.layers().array(),
                 layersInsideLoop = layers.objectEnumerator();
-                processLayer(layersInsideLoop, hScale, vScale, scaleRatio);
+                processTextLayer(layersInsideLoop, scale);
         } else {
 
-            var fixedMasks = getAutoresizingConstrains(layer);
-            var scales = [hScale, vScale];   // layer实际缩放比例
-            if (fixedMasks != undefined && fixedMasks != null && fixedMasks > 0) {
-
-                scales = resizingLayerWithMask(layer, fixedMasks, hScale, vScale);
-            }
-            log("scale"+scales);
-            // 文本字体需要手动放大
-            if (isLayerClass(layer, "MSTextLayer")) {
-
-                log("layer-fontSize,before:" + layer.fontSize());
-                var hRatio = scales[0] * scaleRatio;
-                var vRatio = scales[1] * scaleRatio;
-                var ratio = hRatio > vRatio ? hRatio : vRatio;
-                var s = layer.fontSize() * parseFloat(ratio);
-                layer.fontSize = Math.floor(s);
-                log("layer-fontSize:" + layer.fontSize());
-            }
+            log("text scale=" +scale);
+            scaleTextLayer(layer, scale);
         }
     }
 }
+
+
+function updateLayout() {
+
+    var scaleRatio = command.valueForKey_onLayer(kScale, selectedArtboard);
+    print("scaleRatio" + ratio);
+    var group = createGroup();
+    for (var key in group) {
+
+        var layers = group.key;
+    }
+}
+
+// 选中的图层根据父亲节点分组
+function createGroup() {
+
+    var count = selection.count();
+    var group = [[NSMutableDictionary alloc] init];
+    for (var i = 0; i < count; i++)
+    {
+        var parentName = selection[i].parentGroup().name();
+        var layers = group.parentName;
+        if (!layers) {
+            layers = [[NSMutableArray alloc] init];
+        } else {
+            [layers addObject:selection[i]];
+        }
+        [group setObject:layers forKey:parentName];
+    }
+    log(group);
+    return group;
+}
+
+function updateNavigationBar(layer, logicalScaleRatio, pixelScaleRatio) {
+
+    var layers = layer.children();
+    var count = layers.count();
+    log("updateNavigationBar:" + layers);
+    for (var i = 0; i < count; i++) {
+
+        if (i == count - 2) return; // children()返回的数组里包括自己
+        if (isLayerClass(layers[i], "MSLayerGroup")) {
+
+            //setLeft(layers[i], getOldLeft(layers[i], pixelScaleRatio) * logicalScaleRatio);
+            setWidth(layers[i], getOldWidth(layers[i], pixelScaleRatio) * logicalScaleRatio);
+            continue;
+        }
+        scaleTextLayer(layers[i], logicalScaleRatio);
+    }
+
+}
+

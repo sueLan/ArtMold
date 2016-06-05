@@ -1,0 +1,39 @@
+{
+  "author" : "rongyan.zry",
+  "commands" : [
+    {
+      "script" : "Script.js",
+      "handler" : "setBizRules",
+      "shortcut" : "cmd e",
+      "name" : "Switch",
+      "identifier" : "com.rongyanzry.artmoldswitch"
+    },
+    {
+      "script" : "Script.js",
+      "handler" : "onRun",
+      "shortcut" : "cmd p",
+      "name" : "Scale",
+      "identifier" : "com.rongyanzry.artmoldscale"
+    },
+    {
+      "script" : "Script.js",
+      "handler" : "setFixedMasks",
+      "shortcut" : "cmd l",
+      "name" : "Mask",
+      "identifier" : "com.rongyanzry.armoldmask"
+    }
+  ],
+  "menu" : {
+    "items" : [
+      "com.rongyanzry.artmoldswitch",
+      "com.rongyanzry.artmoldscale",
+      "com.rongyanzry.armoldmask"
+    ],
+    "title" : "ArtMold"
+  },
+  "identifier" : "com.rongyanzry.sketch.9a776995-f790-4048-870b-881639f52bcc",
+  "version" : "1.0",
+  "description" : "A plugin that helps you to scale artboards and layers",
+  "authorEmail" : "scutryzheng@gmail.com",
+  "name" : "ArtMold"
+}

@@ -2,31 +2,42 @@
  * Created by rongyanzry on 16/4/7.
  */
 
+@import "Script.js"
 
 /**
  *
  * @param layer
- * @param layerType
  * @param screenRatio 屏幕尺寸比例
  * @param scaleFactorRatio 屏幕scale比例
  * @param widthScale 宽度缩放比例因子
  * @param heightScale 高度缩放比例因子
  */
-function resizingLayer (layer, layerType, screenRatio, scaleFactorRatio, widthScale, heightScale) {
+function resizingLayer (layer, screenRatio, scaleFactorRatio, widthScale, heightScale) {
+
+    var LayerType = command.valueForKey_onLayer(kLayerType, layer);
 
     resizingLayerWithMask(layer, screenRatio, scaleFactorRatio, widthScale, heightScale);
-    switch (layerType)
-    {
-        case LayerType.kNone :
-        case LayerType.kBanner:
-        case LayerType.kCell:
-        case LayerType.kIcon:
-            break;
-        case LayerType.kNavigation:
-            updateNavigationBar(layer, screenRatio, widthScale);
-            break;
-        case LayerType.kText:
-            break;
+
+    //switch (layerType)
+    //{
+    //    case LayerType.kNone :
+    //    case LayerType.kBanner:
+    //    case LayerType.kCell:
+    //    case LayerType.kIcon:
+    //        break;
+    //    case LayerType.kNavigation:
+    //        updateNavigationBar(layer, screenRatio, widthScale);
+    //        break;
+    //    case LayerType.kText:
+    //        break;
+    //}
+    var align = command.valueForKey_onLayer(kAlignment, layer);
+    if (align == AlignmentType.AlignmentHorizontalCenter) {
+
+        setLeft(layer, (getParentWidth(layer) - getWidth(layer)) / 2)
+    } else if (align == AlignmentType.AlignmentVerticalCenter) {
+
+        setTop(layer, (getParentHeight(layer) - getHeight(layer)) / 2)
     }
 }
 
@@ -35,57 +46,84 @@ function resizingLayerWithMask(layer, screenRatio, scaleFactorRatio, widthScale,
 
     if (layer == undefined) return;
 
-    var state = getLayerMasks(layer);
-    log("layer:"+layer +"   state:" + state);
+    var masks = getLayerMasks(layer);
+
+    var oldLeft = getOldLeft(layer, widthScale);
+    var oldWidth = getOldWidth(layer, widthScale);
+    var oldRight = getParentOldWidth(layer, widthScale) - oldLeft - oldWidth;
 
     // 1 求水平固定不变的宽度
     var fixedW = 0;
-    if (state[0] == 1) fixedW += getLeft(layer);
-    if (state[4] == 1) fixedW += getWidth(layer);
-    if (state[1] == 1) fixedW += getRight(layer);
+    if (masks[0] == 1) fixedW += getLeft(layer);
+    if (masks[4] == 1) fixedW += getWidth(layer);
+    if (masks[1] == 1) fixedW += getRight(layer);
     fixedW = Math.round(fixedW / parseFloat(widthScale, 2));
     // 2 水平缩放的比例 = oldSize / targetSize
     var hflexibleRatio = (getParentOldWidth(layer, widthScale) - fixedW) / (getParentWidth(layer) - fixedW);
     // 3 求水平自动改变尺寸的左边距和宽度
-    if (state[0] == 0) {
-
-        setLeft(layer, getOldLeft(layer, widthScale) / hflexibleRatio);
-    } else if (state[0] == 1) {
-
-        setLeft(layer, getOldLeft(layer, widthScale) * scaleFactorRatio);
+    if (masks[0] == 0) {
+        // left: flexible
+        setLeft(layer, oldLeft / hflexibleRatio);
+        log("layeroldLeft2" + layer + "oldLeft:" + oldLeft + "ratio:"+hflexibleRatio + "oldLeft:" + getLeft(layer));
+    } else if (masks[0] == 1) {
+        // left: fix
+        setLeft(layer, oldLeft * scaleFactorRatio);
     }
-    if (state[4] == 0) {
 
-        setWidth(layer, getOldWidth(layer) / hflexibleRatio);
-    } else if (state[4] == 1) {
+    if (!isLayerClass(layer, "MSTextLayer")) {
 
-        setWidth(layer, getOldWidth(layer, widthScale) * scaleFactorRatio);
+        if (masks[4] == 0) {
+            // width:flexible
+            setWidth(layer, oldWidth / hflexibleRatio);
+            log("layerWidth2" + layer + "oldWidth:" + oldWidth + "ratio:"+hflexibleRatio + "width:" + getWidth(layer));
+        } else if (masks[4] == 1) {
+
+            setWidth(layer, oldWidth * scaleFactorRatio);
+        }
+    }
+
+    if (masks[1] == 1) {
+        // 右边固定
+        var x = getParentWidth(layer) - oldRight * scaleFactorRatio - getWidth(layer);
+        setLeft(layer, x);
     }
     log("fixedW1:" + layer.frame());
 
     //
     fixedW = 0;
-    if (state[2] == 1) fixedW += getTop(layer);
-    if (state[5] == 1) fixedW += getHeight(layer);
-    if (state[3] == 1) fixedW += getBottom(layer);
+    if (masks[2] == 1) fixedW += getTop(layer);
+    if (masks[5] == 1) fixedW += getHeight(layer);
+    if (masks[3] == 1) fixedW += getBottom(layer);
     fixedW = Math.round(fixedW / parseFloat(heightScale, 2));
+
+    var oldTop = getOldTop(layer, heightScale);
+    var oldHeight = getOldHeight(layer, heightScale);
+    var oldBottom = getParentOldHeight(layer) - oldTop - oldHeight;
 
     var vflexibleRatio = (getParentOldHeight(layer, heightScale) - fixedW) / (getParentHeight(layer) - fixedW);
 
-    if (state[2] == 0) {
+    if (masks[2] == 0) {
 
-        setTop(layer, getOldTop(layer, heightScale) / vflexibleRatio);
-    } else if (state[2] == 1) {
+        setTop(layer, oldTop / vflexibleRatio);
+    } else if (masks[2] == 1) {
 
-        setTop(layer, getOldTop(layer, heightScale) * scaleFactorRatio);
+        setTop(layer, oldTop * scaleFactorRatio);
     }
 
-    if (state[5] == 0) {
+    if (!isLayerClass(layer, "MSTextLayer")) {
+        if (masks[5] == 0) {
 
-        setHeight(layer, getOldHeight(layer, heightScale) / vflexibleRatio);
-    } else if (state[5] == 1) {
+            setHeight(layer, oldHeight / vflexibleRatio);
+        } else if (masks[5] == 1) {
 
-        setHeight(layer, getOldHeight(layer, heightScale) * scaleFactorRatio);
+            setHeight(layer, oldHeight * scaleFactorRatio);
+        }
+    }
+
+    if (masks[3] == 1) {
+
+        var y = getParentHeight(layer) - oldBottom * scaleFactorRatio - getHeight(layer);
+        setTop(layer, y);
     }
     log("fixedW2:" + layer.frame());
 }
@@ -170,8 +208,7 @@ function processLayers(artboard, screenRatio, scaleFactorRatio, widthScaleRatio,
 
         scaleTextLayer(artboard, layer, scaleFactorRatio, widthScaleRatio);
 
-        var cellType = command.valueForKey_onLayer(kLayerType, layer);
-        resizingLayer(layer, cellType, screenRatio, scaleFactorRatio, widthScaleRatio, heightScaleRatio);
+        resizingLayer(layer, screenRatio, scaleFactorRatio, widthScaleRatio, heightScaleRatio);
     }
 }
 
@@ -182,8 +219,8 @@ function scaleTextLayer(artboard, layer, scaleFactorRatio, widthScaleRatio) {
     var shouldScaleText = command.valueForKey_onLayer(kShouldScaleText, artboard);
     var scale = shouldScaleText && shouldScaleText != 0 ? widthScaleRatio : scaleFactorRatio;
 
-    var x = getLeft(layer);
-    var y = getTop(layer);
+    //var x = getLeft(layer);
+    //var y = getTop(layer);
     log("layer-fontSize,before:" + layer.fontSize());
     var s = layer.fontSize() * parseFloat(scale);
     layer.fontSize = Math.floor(s);
@@ -191,8 +228,8 @@ function scaleTextLayer(artboard, layer, scaleFactorRatio, widthScaleRatio) {
 
     // sketch中默认的行高与开发的行高不一致;用公式换算 .
     layer.lineHeight = 2 * Math.ceil(layer.fontSize() / 10) + layer.fontSize();
-    setLeft(layer, x);
-    setTop(layer, y);
+    //setLeft(layer, x);
+    //setTop(layer, y);
 }
 
 function processTextLayer(layerLoop, scale) {

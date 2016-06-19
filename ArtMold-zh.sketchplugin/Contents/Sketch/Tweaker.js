@@ -9,9 +9,15 @@ var LayerType = {
     kBanner: 5
 };
 
+var AlignmentType = {
+    AlignmentVerticalCenter: 1,
+    AlignmentHorizontalCenter: 2
+};
+
+
 // 参数：图层类型和六项状态，0 = Flexible, 1 = Fixed, -1 = Mixed; 对于wState和hState还有 2 = apsectRatioFix,宽高比固定
 // 返回：设定的六项状态数组和图层类型，0 = Flexible, 1 = Fixed, -1 = NoChange,
-function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType)
+function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType, kAlign)
 {
 
     // MSBitmapLayer有个特殊属性:高宽比例固定.UI视图限制选择:只能选择宽或者高缩放,另一边会随之改变
@@ -40,11 +46,15 @@ function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType)
     var navButton = addChekckButton("Navigation", w + 20    ,h - 30*3 , 80, 20);
     var cellButton = addChekckButton("Cell"     , w + 20    ,h - 30*4 , 80, 20);
     var bannerButton = addChekckButton("Banner" , w + 20    ,h - 30*5 , 80, 20);
-    [iconButton setCOSJSTargetFunction:function(sender) {onClickIconButton(sender);}];
-    [textButton setCOSJSTargetFunction:function(sender) {onClickTextButton(sender);}];
-    [navButton setCOSJSTargetFunction:function(sender) {onClickNavigation(sender);}];
-    [cellButton setCOSJSTargetFunction:function(sender) {onClickCell(sender);}];
-    [bannerButton setCOSJSTargetFunction:function(sender) {onClickBanner(sender);}];
+
+    // Alignment
+    var alignLeft = addChekckButton("Alignment Left"     , w + 100    ,h - 30   , 150, 20);
+    var horizontalCenter = addChekckButton("Horizontal Center" , w + 100    ,h - 30*2 , 150, 20);
+    var alignRight = addChekckButton("Alignment Right"   , w + 100    ,h - 30*3 , 150, 20);
+    var alignTop = addChekckButton("Alignment Top"     , w + 100    ,h - 30*4 , 150, 20);
+    var verticalCenter = addChekckButton("Vertical Center" , w + 100    ,h - 30*5 , 150, 20);
+    var alignBottom = addChekckButton("Alignment Bottom" , w + 100    ,h - 30*6 , 150, 20);
+
 
     // 添加按钮
     var lButton = addButton(lState, 0           , h/2 - h/16    , w/4, h/8);
@@ -53,6 +63,8 @@ function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType)
     var bButton = addButton(bState, w/2 - w/16  , 0             , w/8, h/4);
     var wButton = addSideButton(wState, w/4         , h/2 - h/16    , w/2, h/8);
     var hButton = addSideButton(hState, w/2 - w/16  , h/4           , w/8, h/2);
+
+    setCheckButtonTargetFunction();
 
     // 选组框状态
     setCheckbuttonState();
@@ -72,9 +84,9 @@ function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType)
     alertWindow.setAccessoryView(view); // 不用 addAccessoryView，否则宽度强制被固定为300
     if (alertWindow.runModal() != "1000")
     {
-        return [-1, -1, -1, -1, -1, -1, LayerType.kNone];
+        return [-1, -1, -1, -1, -1, -1, LayerType.kNone, 0];
     }
-    return [lButton.state(), rButton.state(), tButton.state(), bButton.state(), wButton.tag(), hButton.tag(), kLayerType];
+    return [lButton.state(), rButton.state(), tButton.state(), bButton.state(), wButton.tag(), hButton.tag(), kLayerType, kAlign];
 
     //
     function addBox(frame, color)
@@ -246,6 +258,43 @@ function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType)
         return [image,state];
     }
 
+    function setCheckButtonTargetFunction()
+    {
+        [iconButton setCOSJSTargetFunction:function(sender) {onClickIconButton(sender);}];
+        [textButton setCOSJSTargetFunction:function(sender) {onClickTextButton(sender);}];
+        [navButton setCOSJSTargetFunction:function(sender) {onClickNavigation(sender);}];
+        [cellButton setCOSJSTargetFunction:function(sender) {onClickCell(sender);}];
+        [bannerButton setCOSJSTargetFunction:function(sender) {onClickBanner(sender);}];
+
+        [alignLeft setCOSJSTargetFunction:function(sender) {
+            lButton.state = sender.state;
+            updateLine(lButton);
+        }];
+
+        [alignRight setCOSJSTargetFunction:function(sender) {
+            rButton.state = sender.state;
+            updateLine(rButton);
+        }];
+        [horizontalCenter setCOSJSTargetFunction:function(sender) {
+            if (sender.state == 0) return;
+            kAlign = AlignmentType.AlignmentHorizontalCenter;
+        }];
+
+        [alignTop setCOSJSTargetFunction:function(sender) {
+            tButton.state = sender.state;
+            updateLine(tButton);
+        }];
+        [alignBottom setCOSJSTargetFunction:function(sender) {
+            bButton.state = sender.state;
+            updateLine(bButton);
+        }];
+
+        [verticalCenter setCOSJSTargetFunction:function(sender) {
+            if (sender.state == 0) return;
+            kAlign = AlignmentType.AlignmentVerticalCenter;
+        }];
+    }
+
     function onClickTextButton(sender)
     {
         offCheckButtons(sender);
@@ -259,7 +308,7 @@ function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType)
         offCheckButtons(sender);
         if (sender.state == 0) return;
         kLayerType = LayerType.kIcon;
-        updateAllLine(1, 1, 1, 1, 1, 1);
+        updateAllLine(1, 0, 1, 0, 1, 1);
     }
 
     function onClickNavigation(sender)
@@ -275,7 +324,7 @@ function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType)
         offCheckButtons(sender);
         if (sender.state == 0) return;
         kLayerType = LayerType.kCell;
-        updateAllLine(1, 1, 1, 0, 1);
+        updateAllLine(1, 1, 1, 0, 1, 0);
     }
 
     function onClickBanner(sender)
@@ -350,6 +399,37 @@ function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType)
                 break;
             default:
                 break;
+        }
+
+        switch (parseInt(kAlign)) {
+            case AlignmentType.AlignmentHorizontalCenter:
+                horizontalCenter.state = 1;
+                break;
+            case AlignmentType.AlignmentVerticalCenter:
+                verticalCenter.state = 1;
+                break;
+            default:
+                break;
+        }
+
+        if (lState) {
+            lButton.state = 1;
+            updateLine(lButton);
+        }
+
+        if (rState) {
+            rButton.state = 1;
+            updateLine(rButton);
+        }
+
+        if (tState) {
+            tButton.state = 1;
+            updateLine(tButton);
+        }
+
+        if (bState) {
+            bButton.state = 1;
+            updateLine(bButton);
         }
     }
 

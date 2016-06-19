@@ -33,6 +33,9 @@ var kShouldArtBoardAccurateHeight = "kShouldArtBoardAccurateHeight";
 // 用户定义的元素类型
 var kLayerType = "kLayerType";
 
+//
+var kAlignment = "kAlignment";
+
 var app = NSApplication.sharedApplication(),
     doc,             // MSDocument object,
     selection,       // an NSArray of the layer(s) that are selected in the current document
@@ -162,10 +165,10 @@ var setFixedMasks = function (context) {
     var status = getSelectedLayersState();
 
     // 弹出选择框
-    status = runTweaker(status[0], status[1], status[2], status[3], status[4], status[5], status[6]);
+    status = runTweaker(status[0], status[1], status[2], status[3], status[4], status[5], status[6], status[7]);
 
     //
-    setSelectionLayersMasks(status);
+    setSelectionLayersStatus(status);
 };
 
 var setBizRules = function (context) {
@@ -196,10 +199,11 @@ function getSelectedLayersState() {
         return;
     }
 
-    // 数组每个元素对应FixedSizeMask中的六个状态, 以及图层类型
-    var status = [0, 0, 0, 0, 0, 0, 0];
+    // 数组每个元素对应FixedSizeMask中的六个状态, 以及图层类型, 对齐居中方向
+    var status = [0, 0, 0, 0, 0, 0, 0, 0];
     var layerType;
     var masks;
+    var hAlign;
     for (var i = 0; i < count; i++) {
 
         // mask
@@ -218,13 +222,19 @@ function getSelectedLayersState() {
 
         // 图层类型
         layerType = command.valueForKey_onLayer(kLayerType, selection[i]);
+        hAlign = command.valueForKey_onLayer(kAlignment, selection[i]);
         if (i == 0)
         {
             status[6] = layerType;
+            status[7] = hAlign;
         }
         else if (status[6] != layerType)
         {
             status[6] = -1;
+        }
+        else if (status[7] != hAlign)
+        {
+            status[7] = -1;
         }
     }
     return status;
@@ -251,15 +261,15 @@ function getLayerMasks(currentLayer) {
     state[4] = width ? width : 0;
     var height = command.valueForKey_onLayer(kHeight, currentLayer);
     state[5] = height ? height : 0;
-    log("state-layer"+state);
+    log(currentLayer + "state-layer"+state);
     return state;
 }
 
 /**
- * 存储一个数组的图层的mask
+ * 存储一个数组的图层的mask 和 状态
  * @param status
  */
-function setSelectionLayersMasks(status) {
+function setSelectionLayersStatus(status) {
 
     log("user choose status : " + status);
 
@@ -278,6 +288,7 @@ function setSelectionLayersMasks(status) {
         // 存储
         setLayerMasks(selection[i], masks);
         command.setValue_forKey_onLayer(status[6], kLayerType, selection[i]);
+        command.setValue_forKey_onLayer(status[7], kAlignment, selection[i]);
     }
 }
 

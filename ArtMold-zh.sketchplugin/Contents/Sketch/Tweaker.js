@@ -40,6 +40,14 @@ function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType,
     // var outer = addBox(frame, [NSColor whiteColor]);
     // var inner = addBox(CGRectInset(frame, w/4, h/4), [NSColor colorWithDeviceWhite:0.98 alpha:1]);
 
+    // 添加按钮
+    var lButton = addButton(lState, 0           , h/2 - h/16    , w/4, h/8);
+    var rButton = addButton(rState, w*3/4       , h/2 - h/16    , w/4, h/8);
+    var tButton = addButton(tState, w/2 - w/16  , h*3/4 - 1     , w/8, h/4);
+    var bButton = addButton(bState, w/2 - w/16  , 0             , w/8, h/4);
+    var wButton = addSideButton(wState, w/4         , h/2 - h/16    , w/2, h/8);
+    var hButton = addSideButton(hState, w/2 - w/16  , h/4           , w/8, h/2);
+
     // 添加选择框
     var iconButton = addChekckButton("Icon"     , w + 20    ,h - 30   , 80, 20);
     var textButton = addChekckButton("Text"     , w + 20    ,h - 30*2 , 80, 20);
@@ -55,15 +63,7 @@ function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType,
     var verticalCenter = addChekckButton("Vertical Center" , w + 100    ,h - 30*5 , 150, 20);
     var alignBottom = addChekckButton("Alignment Bottom" , w + 100    ,h - 30*6 , 150, 20);
 
-
-    // 添加按钮
-    var lButton = addButton(lState, 0           , h/2 - h/16    , w/4, h/8);
-    var rButton = addButton(rState, w*3/4       , h/2 - h/16    , w/4, h/8);
-    var tButton = addButton(tState, w/2 - w/16  , h*3/4 - 1     , w/8, h/4);
-    var bButton = addButton(bState, w/2 - w/16  , 0             , w/8, h/4);
-    var wButton = addSideButton(wState, w/4         , h/2 - h/16    , w/2, h/8);
-    var hButton = addSideButton(hState, w/2 - w/16  , h/4           , w/8, h/2);
-
+    //doc.showMessage("l = "+lState+" r ="+rState + " "+tState + " " + bState +" ");
     setCheckButtonTargetFunction();
 
     // 选组框状态
@@ -401,6 +401,26 @@ function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType,
                 break;
         }
 
+        if (lButton.state() == 1)
+        {
+            alignLeft.state = 1;
+        }
+
+        if (rButton.state() == 1)
+        {
+            alignRight.state = 1;
+        }
+
+        if (tButton.state() == 1)
+        {
+            alignTop.state = 1;
+        }
+
+        if (bButton.state() == 1)
+        {
+            alignBottom.state = 1;
+        }
+
         switch (parseInt(kAlign)) {
             case AlignmentType.AlignmentHorizontalCenter:
                 horizontalCenter.state = 1;
@@ -410,26 +430,6 @@ function runTweaker( lState, rState, tState, bState, wState, hState, kLayerType,
                 break;
             default:
                 break;
-        }
-
-        if (lState) {
-            lButton.state = 1;
-            updateLine(lButton);
-        }
-
-        if (rState) {
-            rButton.state = 1;
-            updateLine(rButton);
-        }
-
-        if (tState) {
-            tButton.state = 1;
-            updateLine(tButton);
-        }
-
-        if (bState) {
-            bButton.state = 1;
-            updateLine(bButton);
         }
     }
 

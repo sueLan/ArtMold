@@ -12,32 +12,37 @@
  */
 var getParentOldWidth = function (layer, scale) {
 
-    return Math.round(layer.parentGroup().frame().width() / parseFloat(scale));
+    //return Math.round(layer.parentGroup().frame().width() / parseFloat(scale));
+    return layer.parentGroup().frame().width() / parseFloat(scale);
 };
 
 var getParentOldHeight = function (layer, scale) {
 
-    return Math.round(layer.parentGroup().frame().height() / parseFloat(scale));
+    //return Math.round(layer.parentGroup().frame().height() / parseFloat(scale));
+    return layer.parentGroup().frame().height() / parseFloat(scale);
 };
 
 var getOldWidth = function (layer, scale) {
 
-    return Math.round(layer.frame().width() / parseFloat(scale));
+    //return Math.round(layer.frame().width() / parseFloat(scale));
+    return layer.frame().width() / parseFloat(scale);
 };
 
 var getOldHeight = function (layer, scale) {
 
-    return Math.round(layer.frame().height() / parseFloat(scale));
+    //return Math.round(layer.frame().height() / parseFloat(scale));
+    return layer.frame().height() / parseFloat(scale);
 };
 
 var getOldLeft = function (layer, scale) {
 
-    return Math.round(layer.frame().x() / parseFloat(scale));
+    return layer.frame().x() / parseFloat(scale);
 };
 
 var getOldTop = function (layer, scale) {
 
-    return Math.round(layer.frame().y() / parseFloat(scale));
+    //return Math.round(layer.frame().y() / parseFloat(scale));
+    return layer.frame().y() / parseFloat(scale);
 };
 
 var getOldRight = function (layer, scale) {
@@ -95,23 +100,30 @@ var getBottom = function (layer) {
  */
 var setWidth = function (layer, width) {
 
-    layer.frame().setWidth(Math.round(width));
+    //layer.frame().setWidth(Math.round(width));
+    layer.frame().setWidth(width);
+
 };
 
 var setHeight = function (layer, height) {
 
-    layer.frame().setHeight(Math.round(height));
+    //layer.frame().setHeight(Math.round(height));
+    layer.frame().setHeight(height);
+
 };
 
 var setLeft = function (layer, x) {
 
-    layer.frame().setX(Math.round(x));
+    //layer.frame().setX(Math.round(x));
+    layer.frame().setX(x);
 };
 
 var setTop = function (layer, y) {
 
-    layer.frame().setY(Math.round(y));
+    //layer.frame().setY(Math.round(y));
+    layer.frame().setY(y);
 };
+
 
 var setSize = function (layer, w, h) {
 

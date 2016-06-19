@@ -163,10 +163,11 @@ var setFixedMasks = function (context) {
     initContext(context);
 
     var status = getSelectedLayersState();
-
+    doc.showMessage("before" + status);
     // 弹出选择框
     status = runTweaker(status[0], status[1], status[2], status[3], status[4], status[5], status[6], status[7]);
 
+    //doc.showMessage("after" + status);
     //
     setSelectionLayersStatus(status);
 };
@@ -177,13 +178,20 @@ var setBizRules = function (context) {
     if (!selectedArtboard) {
         doc.showMessage("请选择画板");
     }
-    var ret = showBizRules();
+    var kVertically = command.valueForKey_onLayer(kShouldAutoReizingVertically, selectedArtboard);
+    //kVertically = kVertically ? kVertically : 0;
+    var kScaleText = command.valueForKey_onLayer(kShouldScaleText, selectedArtboard);
+    //kScaleText = kScaleText ? kVertically : 0;
+    var kHeight = command.valueForKey_onLayer(kShouldArtBoardAccurateHeight, selectedArtboard);
+    //kHeight = kHeight ? kHeight : 0;
+
+    var ret = showBizRules(kVertically, kScaleText, kHeight);
 
     command.setValue_forKey_onLayer(ret[0], kShouldAutoReizingVertically, selectedArtboard);
     command.setValue_forKey_onLayer(ret[1], kShouldScaleText, selectedArtboard);
     command.setValue_forKey_onLayer(ret[2], kShouldArtBoardAccurateHeight, selectedArtboard);
 
-    print("bizRules = "+ ret);
+    //doc.showMessage("bizRules = "+ ret);
 };
 
 /**
@@ -261,7 +269,7 @@ function getLayerMasks(currentLayer) {
     state[4] = width ? width : 0;
     var height = command.valueForKey_onLayer(kHeight, currentLayer);
     state[5] = height ? height : 0;
-    log(currentLayer + "state-layer"+state);
+    //doc.showMessage("state-layer"+state);
     return state;
 }
 
@@ -283,8 +291,8 @@ function setSelectionLayersStatus(status) {
                 masks[j] = status[j];
             }
         }
-        log(selection[i] + " setMask :" + masks);
-
+        //log(selection[i] + " setMask :" + masks);
+        doc.showMessage("mask:" + masks);
         // 存储
         setLayerMasks(selection[i], masks);
         command.setValue_forKey_onLayer(status[6], kLayerType, selection[i]);

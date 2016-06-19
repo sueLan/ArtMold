@@ -3,13 +3,16 @@
  */
 
 // 返回：返回选定的导出项目数组
-function showBizRules()
+function showBizRules(kVertically, kScaleText, kHeight)
 {
     var items = [
         "垂直方向间距是否变化",
         "屏幕尺寸变化,字体变化",
         "目标画板高度跟真机一致.大屏到小屏,高度内容较多时建议不选"
     ];
+    var states = [kVertically, kScaleText, kHeight];
+    doc.showMessage("kVertically states = " + states);
+
     //
     var w = 400, h = items.length * 30;
     var view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, w, h)];
@@ -25,7 +28,7 @@ function showBizRules()
         button.bezelStyle = 0;
 
         button.title = title;
-        button.state = i < 2 ? 0 : 1;
+        button.state = states[i];
 
         buttons[i] = button;
         [view addSubview:button];

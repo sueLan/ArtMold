@@ -1,5 +1,3 @@
-Please change the title of the repo to something meaninful like https://github.com/jaimeagudo/ArtMold so the users can find the plugin from http://sketchtoolbox.com/, you'll get more visibility. I cannot issue a PR for it :)
-
 # ArtMold
 
 ArtMold is a plugin for Sketch that helps you duplicate and scale the selected artboard with layers in the artboard resizing.You can  alse specify constraint masks  in some layer to control it flexible resizing or fixed .These constraints are relative to the parent, either a group or an artboard.
@@ -12,7 +10,7 @@ ArtMold is a plugin for Sketch that helps you duplicate and scale the selected a
 
 ## 2. Edit Masks
 ## 3. Scale Artboard 
-![scale](./docs/mask-scale.gif)
+![scale](./docs/scale.gif)
 
 # Installation
 Make sure you have the latest version of Sketch 3 installed. (Sketch 3.3+)

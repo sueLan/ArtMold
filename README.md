@@ -1,6 +1,6 @@
-## Notice
+## Announcement
 
-Sorry for stopping sharing for some  reason
+Sorry for stopping sharing for some  reason.
 
 # ArtMold
 

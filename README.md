@@ -10,6 +10,8 @@ ArtMold is a plugin for Sketch that helps you duplicate and scale the selected a
 ![scale](./docs/switch.gif)
 
 ## 2. Edit Masks
+![scale](./docs/mask.gif)
+
 ## 3. Scale Artboard 
 ![scale](./docs/scale.gif)
 
